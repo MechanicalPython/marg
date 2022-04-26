@@ -1,0 +1,18 @@
+[package]
+name = "marg"
+version = "0.1.1"
+authors = ["Matthew Barson"]
+edition = "2018"
+
+[lib]
+name = "marg"
+path = "src/lib.rs"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+[dependencies]
+linux-embedded-hal = "0.2.0"
+mpu9250 = "0.22.2"
+embedded-hal = "0.2.3"
