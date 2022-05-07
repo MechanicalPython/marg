@@ -9,19 +9,6 @@
 extern crate linux_embedded_hal as hal;
 extern crate mpu9250;
 
-use std::thread::sleep;
-use std::time::Duration;
-
-use hal::{Delay, Pin, Spidev};
-use hal::spidev::{self, SpidevOptions};
-use hal::sysfs_gpio::Direction;
-use mpu9250::{MargMeasurements, Mpu9250};
-
-use marg::{Q, V};
-use marg::madgwick;
-
-use self::mpu9250::{Marg, SpiDevice};
-
 use crate::{Q, V};
 
 // using hardcoded value of pi to match paper

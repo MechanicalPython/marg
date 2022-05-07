@@ -1,5 +1,5 @@
 use marg::{open_mpu_port, V, Q, madgwick};
-use mpu9250::{MargMeasurements, Mpu9250};
+use mpu9250::{MargMeasurements};
 
 
 fn main() {

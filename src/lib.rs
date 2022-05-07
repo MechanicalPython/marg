@@ -42,10 +42,8 @@ use std::time::Duration;
 use hal::{Delay, Pin, Spidev};
 use hal::spidev::{self, SpidevOptions};
 use hal::sysfs_gpio::Direction;
-use mpu9250::{MargMeasurements, Mpu9250};
+use mpu9250::{Mpu9250};
 
-use marg::{Q, V};
-use marg::madgwick;
 
 use self::mpu9250::{Marg, SpiDevice};
 
