@@ -33,6 +33,53 @@ pub mod madgwick;
 
 use std::f32::consts::PI;
 
+extern crate linux_embedded_hal as hal;
+extern crate mpu9250;
+
+use std::thread::sleep;
+use std::time::Duration;
+
+use hal::{Delay, Pin, Spidev};
+use hal::spidev::{self, SpidevOptions};
+use hal::sysfs_gpio::Direction;
+use mpu9250::{MargMeasurements, Mpu9250};
+
+use marg::{Q, V};
+use marg::madgwick;
+
+use self::mpu9250::{Marg, SpiDevice};
+
+pub struct Mpu {
+    pub port: Mpu9250<SpiDevice<Spidev, Pin>, Marg>,
+}
+
+pub fn open_mpu_port() -> Mpu {
+    let mut spi = Spidev::open("/dev/spidev0.0").unwrap();
+    let options = SpidevOptions::new().max_speed_hz(1_000_000)
+        .mode(spidev::SPI_MODE_3)
+        .build();
+    spi.configure(&options).unwrap();
+
+    let ncs = Pin::new(25);
+    ncs.export().unwrap();
+    sleep(Duration::from_millis(100));  // Seems to fix set_direction permission issue
+    while !ncs.is_exported() {}
+
+    ncs.set_direction(Direction::Out).unwrap();  // Permission error here on first run.
+    ncs.set_value(1).unwrap();
+
+    let mpu = Mpu9250::marg_default(spi, ncs, &mut Delay).unwrap();
+    return Mpu {
+        port: mpu,
+    };
+}
+
+pub fn close_mpu_port() {
+    let _ = Pin::new(25).unexport().unwrap();
+    sleep(Duration::from_millis(100));
+}
+
+
 /// Struct for a generic x-axis vector like acceleration in the x, y and z direction.
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
@@ -98,26 +145,26 @@ impl Q {
         let y = self.y;
         let z = self.z;
 
-        let test = x*y + z*w;
+        let test = x * y + z * w;
         if test > 0.499 { // singularity at north pole
             let pitch = 2. * x.atan2(w);
-            let yaw = PI/2.;
+            let yaw = PI / 2.;
             let roll = 0.;
-            return Euler { roll, pitch, yaw }
+            return Euler { roll, pitch, yaw };
         }
         if test < -0.499 { // singularity at south pole
             let pitch = -2. * x.atan2(w);
-            let yaw = -PI/2.;
+            let yaw = -PI / 2.;
             let roll = 0.;
-            return Euler { roll, pitch, yaw }
+            return Euler { roll, pitch, yaw };
         }
 
-        let sqx = x*x;
-        let sqy = y*y;
-        let sqz = z*z;
-        let pitch = (2.*y*w-2.*x*z).atan2( 1. - 2.*sqy - 2.*sqz);
-        let yaw = (2.*test).asin();
-        let roll = (2.*x*w-2.*y*z).atan2( 1. - 2.*sqx - 2.*sqz);
+        let sqx = x * x;
+        let sqy = y * y;
+        let sqz = z * z;
+        let pitch = (2. * y * w - 2. * x * z).atan2(1. - 2. * sqy - 2. * sqz);
+        let yaw = (2. * test).asin();
+        let roll = (2. * x * w - 2. * y * z).atan2(1. - 2. * sqx - 2. * sqz);
 
         Euler { roll, pitch, yaw }
     }
@@ -135,8 +182,8 @@ mod tests {
     impl PartialEq<Euler> for Euler {
         fn eq(&self, other: &Euler) -> bool {
             compare_float(self.roll, other.roll) &&
-            compare_float(self.pitch, other.pitch) &&
-            compare_float(self.yaw, other.yaw)
+                compare_float(self.pitch, other.pitch) &&
+                compare_float(self.yaw, other.yaw)
         }
     }
 
@@ -146,13 +193,13 @@ mod tests {
             w: 1.0,
             x: 0.0,
             y: 0.0,
-            z: 0.0
+            z: 0.0,
         };
 
         let expected_euler = Euler {
             roll: 0.0,
             pitch: 0.0,
-            yaw: 0.0
+            yaw: 0.0,
         };
 
         assert_eq!(expected_euler, q.into());
@@ -164,13 +211,13 @@ mod tests {
             w: 0.991,
             x: 0.131,
             y: 0.0,
-            z: 0.0
+            z: 0.0,
         };
 
         let expected_euler = Euler {
             roll: 0.262,
             pitch: 0.0,
-            yaw: 0.0
+            yaw: 0.0,
         };
 
         assert_eq!(expected_euler, q.into());
@@ -182,13 +229,13 @@ mod tests {
             w: 0.991,
             x: 0.0,
             y: 0.131,
-            z: 0.0
+            z: 0.0,
         };
 
         let expected_euler = Euler {
             roll: 0.0,
             pitch: 0.262,
-            yaw: 0.0
+            yaw: 0.0,
         };
 
         assert_eq!(expected_euler, q.into());
@@ -200,13 +247,13 @@ mod tests {
             w: 0.991,
             x: 0.0,
             y: 0.0,
-            z: 0.131
+            z: 0.131,
         };
 
         let expected_euler = Euler {
             roll: 0.0,
             pitch: 0.0,
-            yaw: 0.262
+            yaw: 0.262,
         };
 
         assert_eq!(expected_euler, q.into());
@@ -218,13 +265,13 @@ mod tests {
             w: 0.996,
             x: 0.052,
             y: 0.047,
-            z: 0.052
+            z: 0.052,
         };
 
         let _expected_euler = Euler {
             roll: 0.1,
             pitch: 0.1,
-            yaw: 0.1
+            yaw: 0.1,
         };
 
         // this fails, presumably due to rounding errors

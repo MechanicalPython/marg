@@ -1,5 +1,5 @@
 /// # Magnetometer and accelerometer calibration
-///
+/// https://medium.com/@niru5/intro-to-inertial-measurement-unit-imu-part-1-47f19fc7d68d
 ///
 /// ## Magnetometer calibration
 /// Reference: https://teslabs.com/articles/magnetometer-calibration/

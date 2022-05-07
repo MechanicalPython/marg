@@ -6,12 +6,27 @@
 ///
 /// Initial Q for a system is 1,0,0,0
 
+extern crate linux_embedded_hal as hal;
+extern crate mpu9250;
+
+use std::thread::sleep;
+use std::time::Duration;
+
+use hal::{Delay, Pin, Spidev};
+use hal::spidev::{self, SpidevOptions};
+use hal::sysfs_gpio::Direction;
+use mpu9250::{MargMeasurements, Mpu9250};
+
+use marg::{Q, V};
+use marg::madgwick;
+
+use self::mpu9250::{Marg, SpiDevice};
 
 use crate::{Q, V};
 
 // using hardcoded value of pi to match paper
-const GYRO_MEAS_ERROR: f32 = 3.14159265358979 * (5.0 / 180.0);  // gyroscope measurement error in rad/s (shown as 5 deg/s)
-const GYRO_MEAS_DRIFT: f32 = 3.14159265358979 * (0.2 / 180.0);  // gyroscope measurement error in rad/s/s (shown as 0.2f deg/s/s)
+const GYRO_MEAS_ERROR: f32 = std::f32::consts::PI * (5.0 / 180.0);  // gyroscope measurement error in rad/s (shown as 5 deg/s)
+const GYRO_MEAS_DRIFT: f32 = std::f32::consts::PI * (0.2 / 180.0);  // gyroscope measurement error in rad/s/s (shown as 0.2f deg/s/s)
 // Compute beta and zeta in function because of rust no sqrt fn in const.
 
 
